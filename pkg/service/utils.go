@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"ping-pulse/pkg/types"
+	"ping-pulse/pkg/utils"
 	"time"
 
 	probing "github.com/prometheus-community/pro-bing"
@@ -15,6 +16,12 @@ func dfsPing(root *types.TreeNode, isParentConnected bool) error {
 		avgLatency    int
 		pingTime      = time.Now().Format(time.RFC3339)
 	)
+
+	configs, err := utils.GetSystemConfigs()
+	if err != nil {
+		return fmt.Errorf("service.dfsPing: %w", err)
+	}
+
 	if isParentConnected {
 		pinger, errNew := probing.NewPinger(root.Value.IPAddress)
 		if errNew != nil {
@@ -23,7 +30,7 @@ func dfsPing(root *types.TreeNode, isParentConnected bool) error {
 
 		//? Pinger configuration
 		pinger.Count = 3
-		pinger.Interval = 150 * time.Millisecond
+		pinger.Interval = time.Duration(configs.Pinger.PingsInterval) * time.Millisecond
 		pinger.Timeout = 5 * time.Second
 
 		errPing := pinger.Run()

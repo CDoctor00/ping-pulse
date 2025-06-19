@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ping-pulse/pkg/database"
 	"ping-pulse/pkg/types"
+	"ping-pulse/pkg/utils"
 	"strings"
 	"time"
 )
@@ -13,7 +14,13 @@ var isRunning bool = false
 func Start(stopChan chan<- error, messageChan chan<- string) {
 	fmt.Println("PingPulse service started")
 
-	var ticker = time.NewTicker(30 * time.Second)
+	configs, err := utils.GetSystemConfigs()
+	if err != nil {
+		stopChan <- fmt.Errorf("service.Start: %w", err)
+		return
+	}
+
+	var ticker = time.NewTicker(time.Duration(configs.Pinger.RoutineDelay) * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {

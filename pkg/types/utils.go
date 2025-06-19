@@ -7,10 +7,10 @@ type Configs struct {
 
 type BotConfigs struct {
 	TokenAPI string
-	ChatID   string
+	ChatID   []int64
 }
 
 type PingerConfigs struct {
-	RoutineDelay int
-	PingsDelay   int
+	RoutineDelay  int
+	PingsInterval int
 }
