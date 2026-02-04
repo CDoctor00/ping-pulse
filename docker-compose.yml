@@ -1,0 +1,106 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: pingpulse_rabbitmq
+    ports:
+      - "10000:5267"
+      - "10001:15267"
+    # environment:
+    #   RABBITMQ_DEFAULT_USER: user
+    #   RABBITMQ_DEFAULT_PASS: password
+
+  database:
+    image: postgres:18.1-alpine3.23
+    container_name: pingpulse_db
+    ports:
+      - "10001:5432"
+    env_file: ".env"
+    networks:
+      - pingpulse_network
+    restart: unless-stopped
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d {DB_NAME}"]
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  migrator:
+    build:
+      context: ./migrator
+      dockerfile: Dockerfile
+    container_name: pingpulse_migrator
+    restart: no
+    env_file: "./migrator/.env"
+    networks:
+      - pingpulse_network
+    depends_on:
+      database:
+        condition: service_healthy
+    command: migrate -path /migrations -database ${DB_SOURCE} -verbose up
+
+  backup:
+    build:
+      context: ./backup
+      dockerfile: Dockerfile
+    container_name: pingpulse_backup
+    restart: unless-stopped
+    env_file: ".env"
+    environment:
+      TZ: "Europe/Rome"
+    networks:
+      - pingpulse_network
+    volumes:
+      - pingpulse_backups_volume:/backups
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  pinger:
+    build:
+      context: ./services/pinger
+      dockerfile: Dockerfile
+    container_name: pingpulse_pinger
+    restart: unless-stopped
+    env_file: "./services/pinger/.env"
+    environment:
+      TZ: "Europe/Rome"
+    networks:
+      - pingpulse_network
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+
+  server:
+    build:
+      context: ./services/server
+      dockerfile: Dockerfile
+    container_name: pingpulse_server
+    restart: unless-stopped
+    env_file: "./services/server/.env"
+    environment:
+      TZ: "Europe/Rome"
+    networks:
+      - pingpulse_network
+
+  notifier:
+    build:
+      context: ./services/notifier
+      dockerfile: Dockerfile
+    container_name: pingpulse_notifier
+    restart: unless-stopped
+    env_file: "./services/notifier/.env"
+    environment:
+      TZ: "Europe/Rome"
+    networks:
+      - pingpulse_network
+
+  volumes:
+    db_data:
+    pingpulse_backups_volume:
+
+  networks:
+    pingpulse_network:
+      driver: bridge
