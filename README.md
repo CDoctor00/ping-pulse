@@ -1,110 +1,65 @@
 # PingPulse
 
-PingPulse is a monitoring system designed to track the status of network hosts and notify users via a bot when there are changes or issues. The project is structured into several components:
+The **_Ping Pulse_** project is a **high-reliability** and **decentralized** network monitoring system, designed to track the operational status of hosts within a defined topology. The architecture is based on **asynchronous microservices** that use a **message broaker** to collaborate and ensure that the critical _ping_ process is never interrupted by secondary notification or configuration services.
 
-## Key Features
+---
 
-- **Host Monitoring**: Regularly checks the status of network hosts and updates their information in the database.
-- **Real-Time Notifications**: Sends notifications to users via a bot when there are significant changes or issues detected during monitoring.
-- **Configurable Settings**: Allows customization through configuration files to integrate with different bot services and tailor notification behavior.
+## 🔑 Key Features
 
-## Components:
+PingPulse focuses on the continuity of the _ping_ service, intelligent dependency management, and timely, tiered notification.
 
-- **Database**: An SQLite database that manages connections and stores information about monitored hosts, including their IP addresses, statuses, and historical data.
-- **Service Module**: Handles the periodic pinging of hosts and processes the results. It uses a ticker to schedule routine checks at regular intervals.
-- **Bot Module**: Communicates with an external bot service using API tokens and chat IDs defined in configuration settings. It sends notifications based on the status updates received from the service module.
+- **High Reliability and Asynchronous Decoupling**
+  - The architecture based on **Asynchronous Microservices** and **RabbitMQ** ensures the **Monitoring Core** (the ping process) is not blocked by failures in the notification or API services.
+  - A **Message Broker** guarantees _buffering_ and reliable delivery of critical events (alarm and configuration).
+- **Intelligent Monitoring Logic (Graph Management)**
+  - Implements **Graph Logic** for managing **parent/child** host dependencies.
+  - If a **parent** host is unreachable, **child** hosts are automatically marked as "UNREACHABLE" without executing additional pings, speeding up root cause identification.
+- **Secure and Atomic Configuration Management**
+  - Topology changes are managed by the **Backend API Service** using a **blocking Mutex** and an **Atomic SQL Transaction** on PostgreSQL, preventing inconsistencies.
+  - The **Monitoring Core** uses an **internal Lock** to temporarily suspend the ping cycle and safely reload the configuration from PostgreSQL.
+- **Multi-Channel Escalation Notification System**
+  - The **Notification Handler Service** manages alarms with a two-level process:
+    - **Primary Notification:** Immediate alert sending via **Telegram Bot API**.
+    - **Automatic Escalation:** If the alarm is not **acknowledged** by the user clicking on the specific message button, the message will be deleted and new one will be sent until the alarm is marked as received.
+- **User Interface and Centralized Data History**
+  - The **Frontend Dashboard (React)** offers a **Dashboard** with **network graph** visualization and an interface for viewing data and modifying configuration.
+  - **PostgreSQL** serves as the central archive for the **network topology**, detailed **uptime/downtime history**, and alarm status.
 
-## <a name="commit"></a> Commit Message Format
+---
 
-This documentation explain how to read the project's commit format. It was inspired by the [Angular's one](https://github.com/angular/angular/blob/main/CONTRIBUTING.md).
+## 🏗️ System Architecture (Technologies: Golang, PostgreSQL, RabbitMQ, React)
 
-Each commit message consists of a **header**, a **body**, and a **footer**.
+The system is composed of three independent Golang services that communicate via RabbitMQ, supported by a relational database and a user interface.
 
-```
-<header>
-<BLANK LINE>
-<body>
-<BLANK LINE>
-<footer>
-```
+| **Component**                               | **Architectural Role**               | **Main Tasks**                                                                                                                                                              |
+| :------------------------------------------ | :----------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monitoring Core Service (Pinger)**        | **Core Logic (Producer/Consumer)**   | - Executes concurrent **pings**.<br>- Implements the network **graph logic**.<br>- **Produces** alarm events for RabbitMQ.<br>- **Consumes** configuration reload messages. |
+| **Backend API Service (Server)**            | **Interface and Control**            | - Exposes **REST APIs** for the Frontend.<br>- Manages configuration changes with a **blocking lock**.<br>- **Produces** configuration reload events for RabbitMQ.          |
+| **Notification Handler Service (Notifier)** | **Alarm Logic (Consumer)**           | - **Consumes** alarm events from RabbitMQ.<br>- Sends the primary notification (**Telegram**).<br>- Manages the **escalation timer**.<br>- Triggers the call (**Twilio**).  |
+| **Frontend Dashboard (React)**              | **User Interface**                   | - Provides the Dashboard.<br>- **Network graph** visualization.<br>- Interface for configuration modification and history viewing.                                          |
+| **PostgreSQL**                              | **Relational Database**              | - Stores the **network topology** and configurations.<br>- Maintains **uptime/downtime history** and alarms.                                                                |
+| **RabbitMQ**                                | **Message Broker**                   | - Ensures **asynchronous communication** and **decoupling** between the Go services.<br>- Buffers critical events (alarm/configuration).                                    |
+| **Telegram**                                | **External Services (Notification)** | - Communication channels for **primary notification** (Telegram Bot API).                                                                                                   |
+| **Docker Compose**                          | **Local Orchestration**              | - Manages and interconnects the entire microservices environment for local development and deployment.                                                                      |
 
-The `header` is mandatory and must conform to the [Commit Message Header](#commit-header) format.
+---
 
-The `body` is mandatory for all commits except for those of type "docs".
-When the body is present it must be at least 20 characters long and must conform to the [Commit Message Body](#commit-body) format.
+## 💡 Operational Flow Details
 
-The `footer` is optional. The [Commit Message Footer](#commit-footer) format describes what the footer is used for and the structure it must have.
+### Flow 1: Alarm Detection and Escalation
 
-### <a name="commit-header"></a>Commit Message Header
+1.  **Monitoring Core** detects a state change thanks to the graph/ping logic.
+2.  The Core sends a JSON message (alarm event) to the RabbitMQ queue.
+3.  **Notification Handler** consumes the event.
+4.  It sends the **Primary Notification** via Telegram, marking the alarm as **PENDING** in PostgreSQL.
+5.  If no acknowledgment is received (via Telegram) within a time limit, the service sends again the notification.
 
-```
-<project part>[<type>]: <short summary / title>
-  │       │             │
-  │       │             └─⫸ Commit Summary: Summary in present tense (like a title)
-  │       │
-  │       └─⫸ Commit Type: CHORE|DOCS|FEAT|FIX|OTHER|PERF|REFACTOR|STYLE|TEST
-  │
-  └─⫸ Project part: BE(Back-End)|FE(Front-End)
-```
+### Flow 2: Configuration Update
 
-The `<type>` and `<summary/title>` fields are mandatory. The `<project part>` should not be present unless the commit affects the entire project.
-
-#### Type
-
-The following table explains how to chose the commit type.
-
-|   **Type**   | **Meaning**                                                                                         |
-| :----------: | :-------------------------------------------------------------------------------------------------- |
-|  **chore**   | Changes to the build process or auxiliary tools and libraries such as documentation generation      |
-|   **docs**   | Documentation only changes                                                                          |
-|   **feat**   | Added a new feature                                                                                 |
-|   **fix**    | Added a bug fix                                                                                     |
-|  **other**   | Any other type of changes that do not fall within the specified types, for this they _must be rare_ |
-|   **perf**   | A code change that improves performance                                                             |
-| **refactor** | A code change that neither fixes a bug nor adds a feature                                           |
-|  **style**   | Changes that do not affect the meaning of the code (white-space, formatting, indentation, etc)      |
-|   **test**   | Adding missing tests or correcting existing tests                                                   |
-
-#### Summary
-
-Use the summary field to provide a succinct description of the change:
-
-- use the imperative, present tense: "change" not "changed" nor "changes"
-- don't capitalize the first letter
-- no dot (.) at the end
-
-#### <a name="commit-body"></a>Commit Message Body
-
-Just as in the summary, use the imperative, present tense: "fix" not "fixed" nor "fixes".
-
-Explain the motivation for the change in the commit message body. This commit message should explain _why_ you are making the change.
-You can include a comparison of the previous behavior with the new behavior in order to illustrate the impact of the change.
-
-#### <a name="commit-footer"></a>Commit Message Footer
-
-The footer can contain information about breaking changes and deprecations and is also the place to reference GitHub issues, Jira tickets, and other PRs that this commit closes or is related to.
-For example:
-
-```
-BREAKING CHANGE: <breaking change summary>
-<BLANK LINE>
-<breaking change description + migration instructions>
-<BLANK LINE>
-<BLANK LINE>
-Fixes #<issue number>
-```
-
-or
-
-```
-DEPRECATED: <what is deprecated>
-<BLANK LINE>
-<deprecation description + recommended update path>
-<BLANK LINE>
-<BLANK LINE>
-Closes #<pr number>
-```
-
-Breaking Change section should start with the phrase `BREAKING CHANGE: ` followed by a summary of the breaking change, a blank line, and a detailed description of the breaking change that also includes migration instructions.
-
-Similarly, a Deprecation section should start with `DEPRECATED: ` followed by a short description of what is deprecated, a blank line, and a detailed description of the deprecation that also mentions the recommended update path.
+1.  The administrator modifies the configuration (settings or topology) via the **Frontend Dashboard**.
+2.  The **Backend API Service** receives the REST request.
+3.  It applies a **blocking Mutex** to serialize writes.
+4.  It executes the configuration modification in PostgreSQL using an **Atomic SQL Transaction**.
+5.  It releases the Mutex.
+6.  It sends a "Configuration Reload" message to the dedicated RabbitMQ queue.
+7.  **Monitoring Core** receives the message, applies its **internal Lock** to momentarily suspend pings, reloads the new topology from PostgreSQL, and immediately resumes the updated ping cycle.
