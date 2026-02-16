@@ -8,12 +8,12 @@ type SystemConfig struct {
 }
 
 type BusinessConfig struct {
-	PacketsCount     Config `json:"packets_count"`
-	PacketSize       Config `json:"packet_size"`
-	PingsInterval    Config `json:"pings_interval"`
-	PingsTimeout     Config `json:"pings_timeout"`
-	RoutineDelay     Config `json:"routine_delay"`
-	PendingThreshold Config `json:"pending_threshold"`
+	PacketsCount     Config `json:"packetsCount"`
+	PacketSize       Config `json:"packetSize"`
+	PingsInterval    Config `json:"pingsInterval"`
+	PingsTimeout     Config `json:"pingsTimeout"`
+	RoutineDelay     Config `json:"routineDelay"`
+	PendingThreshold Config `json:"pendingThreshold"`
 }
 
 type Config struct {

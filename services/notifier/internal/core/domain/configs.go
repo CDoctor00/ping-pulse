@@ -10,7 +10,7 @@ type SystemConfig struct {
 }
 
 type BusinessConfig struct {
-	NotificationRepeatInterval Config `json:"notification_repeat_interval" validate:"required"`
+	NotificationRepeatInterval Config `json:"notificationRepeatInterval" validate:"required"`
 }
 
 type Config struct {

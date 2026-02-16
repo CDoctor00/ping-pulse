@@ -8,13 +8,13 @@ type SystemConfig struct {
 }
 
 type BusinessConfig struct {
-	PacketsCount               Config `json:"packets_count" validate:"required"`
-	PacketSize                 Config `json:"packet_size" validate:"required"`
-	PingsInterval              Config `json:"pings_interval" validate:"required"`
-	PingsTimeout               Config `json:"pings_timeout" validate:"required"`
-	RoutineDelay               Config `json:"routine_delay" validate:"required"`
-	PendingThreshold           Config `json:"pending_threshold" validate:"required"`
-	NotificationRepeatInterval Config `json:"notification_repeat_interval" validate:"required"`
+	PacketsCount               Config `json:"packetsCount" validate:"required"`
+	PacketSize                 Config `json:"packetSize" validate:"required"`
+	PingsInterval              Config `json:"pingsInterval" validate:"required"`
+	PingsTimeout               Config `json:"pingsTimeout" validate:"required"`
+	RoutineDelay               Config `json:"routineDelay" validate:"required"`
+	PendingThreshold           Config `json:"pendingThreshold" validate:"required"`
+	NotificationRepeatInterval Config `json:"notificationRepeatInterval" validate:"required"`
 }
 
 type Config struct {

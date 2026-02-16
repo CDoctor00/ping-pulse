@@ -6,25 +6,25 @@ type AddHostsRequest struct {
 
 type NewHost struct {
 	Name      string  `json:"name" validate:"required,min=2,max=100"`
-	IPAddress string  `json:"ip_address" validate:"required,ip"`
-	ParentIP  *string `json:"parent_ip" validate:"omitempty,ip"`
+	IPAddress string  `json:"ipAddress" validate:"required,ip"`
+	ParentIP  *string `json:"parentIP" validate:"omitempty,ip"`
 	Note      *string `json:"note" validate:"omitempty,max=500"`
 }
 
 type Host struct {
 	ID                 int      `json:"id" validate:"required,gt=0"`
 	Name               string   `json:"name" validate:"required,min=2,max=100"`
-	IPAddress          string   `json:"ip_address" validate:"required,ip"`
+	IPAddress          string   `json:"ipAddress" validate:"required,ip"`
 	Status             string   `json:"status" validate:"required,oneof=online offline warning unknown"`
-	AddedAt            string   `json:"added_at" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
-	LastPing           *string  `json:"last_ping" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	LastPulse          *string  `json:"last_pulse" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
-	ParentIP           *string  `json:"parent_ip" validate:"omitempty,ip"`
+	AddedAt            string   `json:"addedAt" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
+	LastPing           *string  `json:"lastPing" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	LastPulse          *string  `json:"lastPulse" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
+	ParentIP           *string  `json:"parentIP" validate:"omitempty,ip"`
 	Note               *string  `json:"note" validate:"omitempty,max=500"`
-	PingsCount         int      `json:"pings_count" validate:"gte=0"`
-	DisconnectionCount int      `json:"disconnection_count" validate:"gte=0"`
-	AverageLatency     *float64 `json:"average_latency" validate:"omitempty,gte=0"`
-	AveragePacketLoss  *float64 `json:"average_packet_loss" validate:"omitempty,gte=0,lte=100"`
+	PingsCount         int      `json:"pingsCount" validate:"gte=0"`
+	DisconnectionCount int      `json:"disconnectionCount" validate:"gte=0"`
+	AverageLatency     *float64 `json:"averageLatency" validate:"omitempty,gte=0"`
+	AveragePacketLoss  *float64 `json:"averagePacketLoss" validate:"omitempty,gte=0,lte=100"`
 }
 
 type DeleteRequest struct {
@@ -41,11 +41,11 @@ type UpdateConfigsRequest struct {
 
 type Alarm struct {
 	ID          int         `json:"id"`
-	HostIP      string      `json:"host_ip"`
+	HostIP      string      `json:"hostIP"`
 	Status      string      `json:"status"`
-	StartedAt   string      `json:"started_at"`            //? datetime=2006-01-02T15:04:05Z07:00
-	ResolvedAt  *string     `json:"resolved_at,omitempty"` //? datetime=2006-01-02T15:04:05Z07:00
-	MessageInfo MessageInfo `json:"message_info"`
+	StartedAt   string      `json:"startedAt"`            //? datetime=2006-01-02T15:04:05Z07:00
+	ResolvedAt  *string     `json:"resolvedAt,omitempty"` //? datetime=2006-01-02T15:04:05Z07:00
+	MessageInfo MessageInfo `json:"messageInfo"`
 }
 
 type ResponseError struct {

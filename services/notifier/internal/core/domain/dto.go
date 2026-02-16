@@ -20,8 +20,8 @@ type MessageInfo struct {
 }
 
 type UserInfo struct {
-	MessageID int     `json:"message_id"`
-	ChatID    int64   `json:"chat_id"`
-	SentTime  string  `json:"sent_time"`
-	AckTime   *string `json:"acknowledged_time,omitempty"`
+	MessageID int     `json:"messageID"`
+	ChatID    int64   `json:"chatID"`
+	SentTime  string  `json:"sentTime"`
+	AckTime   *string `json:"acknowledgedTime,omitempty"`
 }
