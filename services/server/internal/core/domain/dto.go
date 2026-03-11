@@ -31,13 +31,13 @@ type AlarmDTO struct {
 }
 
 type MessageInfo struct {
-	Body  string     `json:"body"`
-	Users []UserInfo `json:"users"`
+	Body  string     `json:"body" validate:"required"`
+	Users []UserInfo `json:"users" validate:"required,min=1,dive"`
 }
 
 type UserInfo struct {
-	MessageID int     `json:"messageID"`
-	ChatID    int64   `json:"chatID"`
-	SentTime  string  `json:"sentTime"`
-	AckTime   *string `json:"acknowledgedTime,omitempty"`
+	MessageID int     `json:"messageID" validate:"required,gt=0"`
+	ChatID    int64   `json:"chatID" validate:"required,gt=0"`
+	SentTime  string  `json:"sentTime" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
+	AckTime   *string `json:"acknowledgedTime" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 }

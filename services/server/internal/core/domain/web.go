@@ -5,7 +5,7 @@ type AddHostsRequest struct {
 }
 
 type NewHost struct {
-	Name      string  `json:"name" validate:"required,min=2,max=100"`
+	Name      string  `json:"name" validate:"required,min=2,max=255"`
 	IPAddress string  `json:"ipAddress" validate:"required,ip"`
 	ParentIP  *string `json:"parentIP" validate:"omitempty,ip"`
 	Note      *string `json:"note" validate:"omitempty,max=500"`
@@ -13,9 +13,9 @@ type NewHost struct {
 
 type Host struct {
 	ID                 int      `json:"id" validate:"required,gt=0"`
-	Name               string   `json:"name" validate:"required,min=2,max=100"`
+	Name               string   `json:"name" validate:"required,min=1,max=255"`
 	IPAddress          string   `json:"ipAddress" validate:"required,ip"`
-	Status             string   `json:"status" validate:"required,oneof=online offline warning unknown"`
+	Status             string   `json:"status" validate:"required,oneof=UP PENDING DOWN UNREACHABLE MAINTENANCE"`
 	AddedAt            string   `json:"addedAt" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	LastPing           *string  `json:"lastPing" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
 	LastPulse          *string  `json:"lastPulse" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"`
@@ -40,12 +40,12 @@ type UpdateConfigsRequest struct {
 }
 
 type Alarm struct {
-	ID          int         `json:"id"`
-	HostIP      string      `json:"hostIP"`
-	Status      string      `json:"status"`
-	StartedAt   string      `json:"startedAt"`            //? datetime=2006-01-02T15:04:05Z07:00
-	ResolvedAt  *string     `json:"resolvedAt,omitempty"` //? datetime=2006-01-02T15:04:05Z07:00
-	MessageInfo MessageInfo `json:"messageInfo"`
+	ID          int         `json:"id" validate:"required,gt=0"`
+	HostIP      string      `json:"hostIP" validate:"required,ip"`
+	Status      string      `json:"status" validate:"required,oneof=PENDING ACKNOWLEDGED RESOLVED"`
+	StartedAt   string      `json:"startedAt" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
+	ResolvedAt  *string     `json:"resolvedAt" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"` //? datetime=2006-01-02T15:04:05Z07:00
+	MessageInfo MessageInfo `json:"messageInfo" validate:"required,dive"`
 }
 
 type ResponseError struct {
