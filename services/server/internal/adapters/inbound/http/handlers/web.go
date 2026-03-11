@@ -150,7 +150,7 @@ func (h *WebHandler) DeleteAlarms(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON("Alarms deleted")
 }
 
-/* ------------------------------ PATCH ------------------------------ */
+/* ------------------------------ UPDATE ------------------------------ */
 
 func (h *WebHandler) UpdateHosts(ctx fiber.Ctx) error {
 	var data = ctx.Locals("payload").(domain.UpdateHostsRequest)

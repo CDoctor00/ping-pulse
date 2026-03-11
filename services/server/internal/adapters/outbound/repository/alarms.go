@@ -62,8 +62,10 @@ func (pa *PostgresAdapter) GetAlarms() ([]domain.AlarmDTO, error) {
 			return nil, fmt.Errorf("repository.GetAlarms: %w", err)
 		}
 
-		if err = json.Unmarshal(rawData, &alarm.MessageInfo); err != nil {
-			return nil, fmt.Errorf("repository.GetAlarms: %w", err)
+		if len(rawData) > 0 {
+			if err = json.Unmarshal(rawData, &alarm.MessageInfo); err != nil {
+				return nil, fmt.Errorf("repository.GetAlarms: %w", err)
+			}
 		}
 
 		alarms = append(alarms, alarm)

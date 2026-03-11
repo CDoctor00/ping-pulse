@@ -124,26 +124,22 @@ func (pa *PostgresAdapter) DeleteHosts(hostsID []int) error {
 
 /* ------------------------------ UPDATE ------------------------------ */
 
-func (pa *PostgresAdapter) UpdateHosts(hosts []domain.HostDTO) error { //TODO change
-	query := fmt.Sprintf(`WITH new_hosts (id, status, last_ping, last_pulse, pings_count,
-	 disconnection_count, avg_latency, avg_packet_loss) AS (
+func (pa *PostgresAdapter) UpdateHosts(hosts []domain.HostDTO) error {
+	query := fmt.Sprintf(`WITH new_hosts (id, name, ip_address, parent_ip, note) AS (
 	 	VALUES %s
 	 )
 		UPDATE ping_pulse.hosts h
 		SET 
-			status = nh.status::host_status,
-			last_ping = nh.last_ping::timestamptz,
-			last_pulse = nh.last_pulse::timestamptz,
-			pings_count = nh.pings_count::integer,
-			disconnection_count = nh.disconnection_count::integer,
-			avg_latency = nh.avg_latency::numeric(10,5),
-			avg_packet_loss = nh.avg_packet_loss::numeric(5,2)
+			name = nh.name::VARCHAR(255),
+			ip_address = nh.ip_address::VARCHAR(20),
+			parent_ip = nh.parent_ip::VARCHAR(20),
+			note = nh.note::VARCHAR(500)
 	FROM new_hosts nh
-	WHERE h.id = nw.id::integer;`, createPlaceholders(len(hosts), 8))
+	WHERE h.id = nh.id::integer;`, createPlaceholders(len(hosts), 5))
 
 	var tx = pa.db.MustBegin()
 
-	result, err := tx.Exec(query, parseDataToUpdate(hosts)...)
+	_, err := tx.Exec(query, parseDataToUpdate(hosts)...)
 	if err != nil {
 		return fmt.Errorf("repository.UpdateHosts: %w", err)
 	}
@@ -151,10 +147,6 @@ func (pa *PostgresAdapter) UpdateHosts(hosts []domain.HostDTO) error { //TODO ch
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("repository.UpdateHosts: %w", err)
 	}
-
-	//TODO check
-	affected, _ := result.RowsAffected()
-	fmt.Printf("\nUpdate Hosts: %d - %d", len(hosts), affected)
 
 	return nil
 }

@@ -44,29 +44,38 @@ func parseHostAPI(api domain.Host) domain.HostDTO {
 	timestamp, _ := time.Parse(time.RFC3339, api.AddedAt)
 
 	var dto = domain.HostDTO{
-		ID:        api.ID,
-		Name:      api.Name,
-		IPAddress: api.IPAddress,
-		Status:    api.Status,
-		ParentIP: sql.NullString{
-			Valid:  api.ParentIP != nil,
-			String: *api.ParentIP,
-		},
-		AddedAt: timestamp,
-		Note: sql.NullString{
-			Valid:  api.Note != nil,
-			String: *api.Note,
-		},
+		ID:                 api.ID,
+		Name:               api.Name,
+		IPAddress:          api.IPAddress,
+		Status:             api.Status,
+		AddedAt:            timestamp,
 		PingsCount:         api.PingsCount,
 		DisconnectionCount: api.DisconnectionCount,
-		AverageLatency: sql.NullFloat64{
-			Valid:   api.AverageLatency != nil,
+	}
+
+	if api.ParentIP != nil {
+		dto.ParentIP = sql.NullString{
+			Valid:  true,
+			String: *api.ParentIP,
+		}
+	}
+	if api.Note != nil {
+		dto.Note = sql.NullString{
+			Valid:  true,
+			String: *api.Note,
+		}
+	}
+	if api.AverageLatency != nil {
+		dto.AverageLatency = sql.NullFloat64{
+			Valid:   true,
 			Float64: *api.AverageLatency,
-		},
-		AveragePacketLoss: sql.NullFloat64{
-			Valid:   api.AveragePacketLoss != nil,
+		}
+	}
+	if api.AveragePacketLoss != nil {
+		dto.AveragePacketLoss = sql.NullFloat64{
+			Valid:   true,
 			Float64: *api.AveragePacketLoss,
-		},
+		}
 	}
 
 	if api.LastPing != nil {

@@ -10,7 +10,7 @@ import (
 func ErrorHandler(ctx fiber.Ctx, err error) error {
 	var code = fiber.StatusInternalServerError
 	var message = domain.ErrInternal.Error()
-	var details interface{} = nil
+	var details interface{} = err.Error()
 
 	//? Handle fiber errors (es. 404, 405, etc.)
 	var fibErr *fiber.Error
