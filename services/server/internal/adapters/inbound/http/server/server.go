@@ -2,8 +2,10 @@ package server
 
 import (
 	"server/internal/adapters/inbound/http/handlers"
+	"server/internal/adapters/inbound/http/middlewares/limiter"
 	"server/internal/adapters/inbound/http/middlewares/validator"
 	"server/internal/core/domain"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -19,7 +21,6 @@ func NewServer(webHandler *handlers.WebHandler) *Server {
 		ServerHeader: "Back-End",
 		ErrorHandler: handlers.ErrorHandler,
 	})
-	app.Server().MaxConnsPerIP = 2
 
 	return &Server{
 		app:     app,
@@ -28,18 +29,20 @@ func NewServer(webHandler *handlers.WebHandler) *Server {
 }
 
 func (s *Server) SetupRoutes() {
-	api := s.app.Group("api")
+	apiLimiter := limiter.New(60, 1*time.Minute)
+
+	api := s.app.Group("api", apiLimiter)
 
 	hostGroup := api.Group("hosts")
 	hostGroup.Get("/all", s.handler.GetHosts)
 	hostGroup.Get("/:id", s.handler.GetHost)
 	hostGroup.Post("/add", validator.ValidateBody[domain.AddHostsRequest](), s.handler.AddHosts)
 	hostGroup.Delete("/delete", validator.ValidateBody[domain.DeleteRequest](), s.handler.DeleteHosts)
-	hostGroup.Patch("/update", validator.ValidateBody[domain.UpdateHostsRequest](), s.handler.UpdateHosts)
+	hostGroup.Put("/update", validator.ValidateBody[domain.UpdateHostsRequest](), s.handler.UpdateHosts)
 
 	configsGroup := api.Group("configs")
 	configsGroup.Get("/all", s.handler.GetConfigs)
-	hostGroup.Patch("/update", validator.ValidateBody[domain.UpdateConfigsRequest](), s.handler.UpdateConfigs)
+	hostGroup.Put("/update", validator.ValidateBody[domain.UpdateConfigsRequest](), s.handler.UpdateConfigs)
 
 	alarmsGroup := api.Group("alarms")
 	alarmsGroup.Get("/all", s.handler.GetAlarms)
