@@ -11,6 +11,8 @@ type DataRepository interface {
 	AddHosts(hosts []domain.NewHost) error
 	UpdateHosts(hosts []domain.HostDTO) error
 	DeleteHosts(hostsID []int) error
+	IsNameAlreadyUsed(name string) (bool, error)
+	IpAddressExists(ipAddress string) (bool, error)
 
 	GetAlarmByID(id int) (domain.AlarmDTO, error)
 	GetAlarms() ([]domain.AlarmDTO, error)

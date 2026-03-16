@@ -42,7 +42,7 @@ func (s *Server) SetupRoutes() {
 
 	configsGroup := api.Group("configs")
 	configsGroup.Get("/all", s.handler.GetConfigs)
-	hostGroup.Put("/update", validator.ValidateBody[domain.UpdateConfigsRequest](), s.handler.UpdateConfigs)
+	configsGroup.Put("/update", validator.ValidateBody[domain.UpdateConfigsRequest](), s.handler.UpdateConfigs)
 
 	alarmsGroup := api.Group("alarms")
 	alarmsGroup.Get("/all", s.handler.GetAlarms)

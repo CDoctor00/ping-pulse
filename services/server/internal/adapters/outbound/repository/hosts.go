@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"server/internal/core/domain"
 )
@@ -75,6 +77,36 @@ func (pa *PostgresAdapter) GetHosts() ([]domain.HostDTO, error) {
 	}
 
 	return hosts, nil
+}
+
+func (pa *PostgresAdapter) IsNameAlreadyUsed(name string) (bool, error) {
+	query := `SELECT 1 FROM ping_pulse.hosts WHERE name = $1;`
+
+	var value string
+	err := pa.db.QueryRow(query, name).Scan(&value)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("repository.IsNameAlreadyUsed: %w", err)
+	}
+
+	return true, nil
+}
+
+func (pa *PostgresAdapter) IpAddressExists(ipAddress string) (bool, error) {
+	query := `SELECT 1 FROM ping_pulse.hosts WHERE ip_address = $1;`
+
+	var value string
+	err := pa.db.QueryRow(query, ipAddress).Scan(&value)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("repository.IpAddressExists: %w", err)
+	}
+
+	return true, nil
 }
 
 /* ------------------------------ INSERT ------------------------------ */

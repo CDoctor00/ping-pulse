@@ -18,7 +18,7 @@ type BusinessConfig struct {
 }
 
 type Config struct {
-	Key         string `json:"key" validate:"required,alphanum,max=50"`
+	Name        string `json:"name" validate:"required,max=50"`
 	Value       int    `json:"value" validate:"required,gte=0"`
 	Description string `json:"description" validate:"required,max=500"`
 }

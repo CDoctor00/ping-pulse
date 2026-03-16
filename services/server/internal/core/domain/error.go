@@ -2,14 +2,10 @@ package domain
 
 import "errors"
 
-type ServiceError struct {
-	IsInternal bool
-	Error      error
-}
-
 var (
 	ErrNotFound   = errors.New("Resource not found")
 	ErrBadRequest = errors.New("The given data is not correct")
+	ErrConflict   = errors.New("The given data doesn't match with the current status")
 	ErrInternal   = errors.New("Internal Server Error")
 )
 

@@ -11,12 +11,18 @@ import (
 
 /* ------------------------------ GET ------------------------------ */
 
-func (m *Manager) GetHost(hostID int) (domain.HostDTO, *domain.ServiceError) {
+func (m *Manager) GetHost(hostID int) (domain.HostDTO, error) {
 	host, err := m.repository.GetHost(hostID)
 	if err != nil {
-		return domain.HostDTO{}, &domain.ServiceError{
-			IsInternal: !errors.Is(errors.Unwrap(err), sql.ErrNoRows),
-			Error:      fmt.Errorf("usecase.GetHost: %w", err),
+		if errors.Is(errors.Unwrap(err), sql.ErrNoRows) {
+			return domain.HostDTO{}, domain.UseCaseError{
+				Message:    domain.ErrBadRequest,
+				StackTrace: fmt.Errorf("usecase.GetHost: %w", err),
+			}
+		}
+		return domain.HostDTO{}, domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.GetHost: %w", err),
 		}
 
 	}
@@ -27,7 +33,10 @@ func (m *Manager) GetHost(hostID int) (domain.HostDTO, *domain.ServiceError) {
 func (m *Manager) GetHosts() ([]domain.HostDTO, error) {
 	hosts, err := m.repository.GetHosts()
 	if err != nil {
-		return nil, fmt.Errorf("usecase.GetHosts: %w", err)
+		return nil, domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.GetHosts: %w", err),
+		}
 	}
 
 	return hosts, nil
@@ -36,12 +45,68 @@ func (m *Manager) GetHosts() ([]domain.HostDTO, error) {
 /* ------------------------------ POST ------------------------------ */
 
 func (m *Manager) AddHosts(hosts []domain.NewHost) error {
+	//? Check existing resources
+	for _, host := range hosts {
+		exists, err := m.repository.IsNameAlreadyUsed(host.Name)
+		if err != nil {
+			return domain.UseCaseError{
+				Message:    domain.ErrInternal,
+				StackTrace: fmt.Errorf("usecase.AddHosts: %w", err),
+			}
+		}
+		if exists {
+			return domain.UseCaseError{
+				Message:    domain.ErrConflict,
+				StackTrace: fmt.Errorf("The name '%s' already exists", host.Name),
+			}
+		}
+
+		exists, err = m.repository.IpAddressExists(host.IPAddress)
+		if err != nil {
+			return domain.UseCaseError{
+				Message:    domain.ErrInternal,
+				StackTrace: fmt.Errorf("usecase.AddHosts: %w", err),
+			}
+		}
+		if exists {
+			return domain.UseCaseError{
+				Message:    domain.ErrConflict,
+				StackTrace: fmt.Errorf("The IP Address '%s' already exists", host.IPAddress),
+			}
+		}
+
+		if host.ParentIP != nil {
+			exists, err = m.repository.IpAddressExists(*host.ParentIP)
+			if err != nil {
+				return domain.UseCaseError{
+					Message:    domain.ErrInternal,
+					StackTrace: fmt.Errorf("usecase.AddHosts: %w", err),
+				}
+			}
+			if !exists {
+				for _, h := range hosts {
+					if *host.ParentIP == h.IPAddress {
+						break
+					}
+				}
+
+				return domain.UseCaseError{
+					Message:    domain.ErrConflict,
+					StackTrace: fmt.Errorf("The Parent IP Address '%s' doesn't exist", *host.ParentIP),
+				}
+			}
+		}
+	}
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	err := m.repository.AddHosts(hosts)
 	if err != nil {
-		return fmt.Errorf("usecase.AddHosts: %w", err)
+		return &domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.AddHosts: %w", err),
+		}
 	}
 
 	body, err := json.Marshal(
@@ -50,7 +115,10 @@ func (m *Manager) AddHosts(hosts []domain.NewHost) error {
 			Timestamp: time.Now().Format(time.RFC3339),
 		})
 	if err != nil {
-		return fmt.Errorf("usecase.AddHosts: %w", err)
+		return &domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.AddHosts: %w", err),
+		}
 	}
 
 	m.eventProducer.PublishEvent(body)
@@ -66,7 +134,10 @@ func (m *Manager) DeleteHosts(hostsID []int) error {
 
 	err := m.repository.DeleteHosts(hostsID)
 	if err != nil {
-		return fmt.Errorf("usecase.DeleteHosts: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.DeleteHosts: %w", err),
+		}
 	}
 
 	body, err := json.Marshal(
@@ -75,7 +146,10 @@ func (m *Manager) DeleteHosts(hostsID []int) error {
 			Timestamp: time.Now().Format(time.RFC3339),
 		})
 	if err != nil {
-		return fmt.Errorf("usecase.DeleteHosts: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.DeleteHosts: %w", err),
+		}
 	}
 
 	m.eventProducer.PublishEvent(body)
@@ -86,12 +160,31 @@ func (m *Manager) DeleteHosts(hostsID []int) error {
 /* ------------------------------ PATCH ------------------------------ */
 
 func (m *Manager) UpdateHosts(hosts []domain.HostDTO) error {
+	for _, host := range hosts {
+		exists, err := m.repository.IpAddressExists(host.IPAddress)
+		if err != nil {
+			return domain.UseCaseError{
+				Message:    domain.ErrInternal,
+				StackTrace: fmt.Errorf("usecase.UpdateHosts: %w", err),
+			}
+		}
+		if !exists {
+			return domain.UseCaseError{
+				Message:    domain.ErrConflict,
+				StackTrace: fmt.Errorf("The IP Address '%s' doesn't exist", host.IPAddress),
+			}
+		}
+	}
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	err := m.repository.UpdateHosts(hosts)
 	if err != nil {
-		return fmt.Errorf("usecase.UpdateHosts: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.UpdateHosts: %w", err),
+		}
 	}
 
 	body, err := json.Marshal(
@@ -100,7 +193,10 @@ func (m *Manager) UpdateHosts(hosts []domain.HostDTO) error {
 			Timestamp: time.Now().Format(time.RFC3339),
 		})
 	if err != nil {
-		return fmt.Errorf("usecase.UpdateHosts: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.UpdateHosts: %w", err),
+		}
 	}
 
 	m.eventProducer.PublishEvent(body)

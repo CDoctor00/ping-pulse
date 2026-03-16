@@ -31,15 +31,7 @@ func (h *WebHandler) GetHost(ctx fiber.Ctx) error {
 
 	host, errGet := h.ucManager.GetHost(hostID)
 	if errGet != nil {
-		message := domain.ErrBadRequest
-		if errGet.IsInternal {
-			message = domain.ErrInternal
-		}
-
-		return domain.UseCaseError{
-			Message:    message,
-			StackTrace: errGet.Error,
-		}
+		return errGet
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(parseHostDTO(host))
@@ -48,10 +40,7 @@ func (h *WebHandler) GetHost(ctx fiber.Ctx) error {
 func (h *WebHandler) GetHosts(ctx fiber.Ctx) error {
 	hostsDTO, err := h.ucManager.GetHosts()
 	if err != nil {
-		return domain.UseCaseError{
-			Message:    domain.ErrInternal,
-			StackTrace: err,
-		}
+		return err
 	}
 
 	var hosts = make([]domain.Host, len(hostsDTO))
@@ -65,10 +54,7 @@ func (h *WebHandler) GetHosts(ctx fiber.Ctx) error {
 func (h *WebHandler) GetConfigs(ctx fiber.Ctx) error {
 	configs, err := h.ucManager.GetConfigs()
 	if err != nil {
-		return domain.UseCaseError{
-			Message:    domain.ErrInternal,
-			StackTrace: err,
-		}
+		return err
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(configs)
@@ -85,15 +71,7 @@ func (h *WebHandler) GetAlarm(ctx fiber.Ctx) error {
 
 	alarm, errGet := h.ucManager.GetAlarm(alarmID)
 	if errGet != nil {
-		message := domain.ErrBadRequest
-		if errGet.IsInternal {
-			message = domain.ErrInternal
-		}
-
-		return domain.UseCaseError{
-			Message:    message,
-			StackTrace: errGet.Error,
-		}
+		return errGet
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(alarm)
@@ -102,10 +80,7 @@ func (h *WebHandler) GetAlarm(ctx fiber.Ctx) error {
 func (h *WebHandler) GetAlarms(ctx fiber.Ctx) error {
 	alarmsDTO, err := h.ucManager.GetAlarms()
 	if err != nil {
-		return domain.UseCaseError{
-			Message:    domain.ErrInternal,
-			StackTrace: err,
-		}
+		return err
 	}
 
 	var alarms = make([]domain.Alarm, len(alarmsDTO))

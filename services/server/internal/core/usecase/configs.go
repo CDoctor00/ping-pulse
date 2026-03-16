@@ -10,7 +10,10 @@ import (
 func (m *Manager) GetConfigs() (domain.BusinessConfig, error) {
 	configs, err := m.repository.GetConfigs()
 	if err != nil {
-		return domain.BusinessConfig{}, fmt.Errorf("usecase.GetConfigs: %w", err)
+		return domain.BusinessConfig{}, domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.GetConfigs: %w", err),
+		}
 	}
 
 	return configs, nil
@@ -19,15 +22,22 @@ func (m *Manager) GetConfigs() (domain.BusinessConfig, error) {
 func (m *Manager) UpdateConfigs(configs domain.BusinessConfig) error {
 	err := m.repository.UpdateConfigs(configs)
 	if err != nil {
-		return fmt.Errorf("usecase.UpdateConfigs: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.UpdateConfigs: %w", err),
+		}
 	}
 
-	body, err := json.Marshal(domain.ConfigsEvent{
-		EventType: "configs_updated",
-		Timestamp: time.Now().Format(time.RFC3339),
-	})
+	body, err := json.Marshal(
+		domain.ConfigsEvent{
+			EventType: "configs_updated",
+			Timestamp: time.Now().Format(time.RFC3339),
+		})
 	if err != nil {
-		return fmt.Errorf("usecase.UpdateConfigs: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.UpdateConfigs: %w", err),
+		}
 	}
 
 	m.eventProducer.PublishEvent(body)

@@ -9,12 +9,19 @@ import (
 
 /* ------------------------------ GET ------------------------------ */
 
-func (m *Manager) GetAlarm(id int) (domain.AlarmDTO, *domain.ServiceError) {
+func (m *Manager) GetAlarm(id int) (domain.AlarmDTO, error) {
 	alarm, err := m.repository.GetAlarmByID(id)
 	if err != nil {
-		return domain.AlarmDTO{}, &domain.ServiceError{
-			IsInternal: !errors.Is(errors.Unwrap(err), sql.ErrNoRows),
-			Error:      fmt.Errorf("usecase.GetAlarm: %w", err),
+		if errors.Is(errors.Unwrap(err), sql.ErrNoRows) {
+			return domain.AlarmDTO{}, domain.UseCaseError{
+				Message:    domain.ErrBadRequest,
+				StackTrace: fmt.Errorf("usecase.GetAlarm: %w", err),
+			}
+		}
+
+		return domain.AlarmDTO{}, domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.GetAlarm: %w", err),
 		}
 	}
 
@@ -24,7 +31,10 @@ func (m *Manager) GetAlarm(id int) (domain.AlarmDTO, *domain.ServiceError) {
 func (m *Manager) GetAlarms() ([]domain.AlarmDTO, error) {
 	alarms, err := m.repository.GetAlarms()
 	if err != nil {
-		return nil, fmt.Errorf("usecase.GetAlarms: %w", err)
+		return nil, domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.GetAlarms: %w", err),
+		}
 	}
 
 	return alarms, nil
@@ -38,7 +48,10 @@ func (m *Manager) DeleteAlarms(alarmsID []int) error {
 
 	err := m.repository.DeleteAlarms(alarmsID)
 	if err != nil {
-		return fmt.Errorf("usecase.DeleteAlarms: %w", err)
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.DeleteAlarms: %w", err),
+		}
 	}
 
 	return nil

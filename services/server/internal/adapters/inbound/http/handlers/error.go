@@ -35,7 +35,9 @@ func ErrorHandler(ctx fiber.Ctx, err error) error {
 			code = fiber.StatusNotFound
 		case errors.Is(ucErr.Message, domain.ErrBadRequest):
 			code = fiber.StatusBadRequest
-			//? internal error doesn need case, is the default
+		case errors.Is(ucErr.Message, domain.ErrConflict):
+			code = fiber.StatusConflict
+			//? internal error doesn need case, is already setted
 		}
 		message = ucErr.Message.Error()
 		details = ucErr.StackTrace.Error()
