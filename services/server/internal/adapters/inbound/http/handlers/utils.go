@@ -101,6 +101,7 @@ func parseAlarmDTO(dto domain.AlarmDTO) domain.Alarm {
 		ID:          dto.ID,
 		HostIP:      dto.HostIP,
 		Status:      dto.Status,
+		ChildrenID:  dto.ChildrenID,
 		StartedAt:   dto.StartedAt.Format(time.RFC3339),
 		MessageInfo: dto.MessageInfo,
 	}

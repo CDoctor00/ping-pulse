@@ -24,15 +24,20 @@ func (ctx *cycleContext) handleStatusChange(node *domain.Host, oldStatus string)
 	defer ctx.mu.Unlock()
 
 	if node.IsReconnected(oldStatus) {
-		var recovery = domain.Recovery{
+		var recovery = domain.ReportData{
 			HostIP:         node.Data.IPAddress,
 			HostName:       node.Data.Name,
 			Status:         domain.StatusUp,
+			LastPulse:      nil,
 			PreviousStatus: oldStatus,
 			Impact: domain.ImpactAnalysis{
 				ChildrenCount: 0,
-				ChildrenHosts: make([]string, 0),
+				ChildrenHosts: make([]domain.ChildHost, 0),
 			},
+		}
+		if node.Data.LastPulse.Valid {
+			lastPulseTime := node.Data.LastPulse.Time.Format(time.RFC3339)
+			recovery.LastPulse = &lastPulseTime
 		}
 
 		ctx.report.Recoveries = append(ctx.report.Recoveries, recovery)
@@ -40,7 +45,7 @@ func (ctx *cycleContext) handleStatusChange(node *domain.Host, oldStatus string)
 	}
 
 	if node.IsDisconnected(oldStatus) {
-		var incident = domain.Incident{
+		var incident = domain.ReportData{
 			HostIP:         node.Data.IPAddress,
 			HostName:       node.Data.Name,
 			Status:         domain.StatusDown,
@@ -48,7 +53,7 @@ func (ctx *cycleContext) handleStatusChange(node *domain.Host, oldStatus string)
 			LastPulse:      nil,
 			Impact: domain.ImpactAnalysis{
 				ChildrenCount: 0,
-				ChildrenHosts: make([]string, 0),
+				ChildrenHosts: make([]domain.ChildHost, 0),
 			},
 		}
 		if node.Data.LastPulse.Valid {
@@ -62,7 +67,7 @@ func (ctx *cycleContext) handleStatusChange(node *domain.Host, oldStatus string)
 	}
 }
 
-func (ctx *cycleContext) markChildrenUnreachable(node *domain.Host, rootIncident *domain.Incident) {
+func (ctx *cycleContext) markChildrenUnreachable(node *domain.Host, rootIncident *domain.ReportData) {
 	for _, child := range node.Children {
 		child.Mutex.Lock()
 
@@ -70,8 +75,12 @@ func (ctx *cycleContext) markChildrenUnreachable(node *domain.Host, rootIncident
 
 		rootIncident.Impact.ChildrenCount++
 		rootIncident.Impact.ChildrenHosts = append(
-			rootIncident.Impact.ChildrenHosts, fmt.Sprintf("%s (%s)",
-				child.Data.Name, child.Data.IPAddress))
+			rootIncident.Impact.ChildrenHosts,
+			domain.ChildHost{
+				ID:        child.Data.ID,
+				Name:      child.Data.Name,
+				IPAddress: child.Data.IPAddress,
+			})
 
 		child.Mutex.Unlock()
 
@@ -95,13 +104,17 @@ func (ctx *cycleContext) markChildrenPending(node *domain.Host) {
 	}
 }
 
-func generateRecoveryChildren(host *domain.Host, rootRecovery *domain.Recovery) {
+func generateRecoveryChildren(host *domain.Host, rootRecovery *domain.ReportData) {
 	for _, child := range host.Children {
 		if child.Data.Status == domain.StatusUp {
 			rootRecovery.Impact.ChildrenCount++
 			rootRecovery.Impact.ChildrenHosts = append(
-				rootRecovery.Impact.ChildrenHosts, fmt.Sprintf("%s (%s)",
-					child.Data.Name, child.Data.IPAddress))
+				rootRecovery.Impact.ChildrenHosts,
+				domain.ChildHost{
+					ID:        child.Data.ID,
+					Name:      child.Data.Name,
+					IPAddress: child.Data.IPAddress,
+				})
 		}
 
 		generateRecoveryChildren(child, rootRecovery)

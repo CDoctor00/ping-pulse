@@ -43,6 +43,7 @@ type Alarm struct {
 	ID          int         `json:"id" validate:"required,gt=0"`
 	HostIP      string      `json:"hostIP" validate:"required,ip"`
 	Status      string      `json:"status" validate:"required,oneof=PENDING ACKNOWLEDGED RESOLVED"`
+	ChildrenID  []int64     `json:"childrenID" validate:"required"`
 	StartedAt   string      `json:"startedAt" validate:"required,datetime=2006-01-02T15:04:05Z07:00"`
 	ResolvedAt  *string     `json:"resolvedAt" validate:"omitempty,datetime=2006-01-02T15:04:05Z07:00"` //? datetime=2006-01-02T15:04:05Z07:00
 	MessageInfo MessageInfo `json:"messageInfo" validate:"required,dive"`

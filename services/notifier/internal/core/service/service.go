@@ -48,7 +48,7 @@ func (c CoreLogicManager) HandleReportEvent(report domain.CycleReport) error {
 				return fmt.Errorf("service.HandleNetworkEvent: %w", err)
 			}
 
-			body = fmt.Sprintf("%s\n\\-\\-\\-\n%s", body, createBodyMessage(r))
+			body = fmt.Sprintf("%s\n\\-\\-\\-\n%s", body, createBodyMessage(alarm.ID, r))
 		}
 
 		//? Sending messages
@@ -71,13 +71,18 @@ func (c CoreLogicManager) HandleReportEvent(report domain.CycleReport) error {
 			i.HostName, i.HostIP)
 
 		timestamp, _ := time.Parse(time.RFC3339, report.Timestamp)
-		alarm, err := c.repository.AddAlarm(i.HostIP, timestamp)
+		childrenID := make([]int, len(i.Impact.ChildrenHosts))
+		for i, h := range i.Impact.ChildrenHosts {
+			childrenID[i] = h.ID
+		}
+
+		alarm, err := c.repository.AddAlarm(i.HostIP, timestamp, childrenID)
 		if err != nil {
 			return fmt.Errorf("service.HandleNetworkEvent: %w", err)
 		}
 
 		//? Building text message
-		var body = fmt.Sprintf("🔴 *DISCONNESSIONE* 🔴\n%s", createBodyMessage(i))
+		var body = fmt.Sprintf("🔴 *DISCONNESSIONE* 🔴\n%s", createBodyMessage(alarm.ID, i))
 
 		var messageInfo = domain.MessageInfo{
 			Body:  body,

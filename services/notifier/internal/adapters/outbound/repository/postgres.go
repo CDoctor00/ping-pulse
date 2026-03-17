@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type PostgresAdapter struct {
@@ -42,7 +43,7 @@ func (pa *PostgresAdapter) GetBusinessConfigs() (domain.BusinessConfig, error) {
 
 func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 	query := `SELECT 
-	id, host_ip, status, started_at, resolved_at, message_info 
+	id, host_ip, status, children_id, started_at, resolved_at, message_info 
 	FROM ping_pulse.alarms WHERE id = $1;`
 	result := pa.db.QueryRow(query, alarmID)
 
@@ -52,6 +53,7 @@ func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 		&alarm.ID,
 		&alarm.HostIP,
 		&alarm.Status,
+		pq.Array(&alarm.ChildrenID),
 		&alarm.StartedAt,
 		&alarm.ResolvedAt,
 		&rawData,
@@ -69,7 +71,7 @@ func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 
 func (pa *PostgresAdapter) GetActiveAlarmByHost(hostIP string) (domain.AlarmDTO, error) {
 	query := `SELECT 
-	id, host_ip, status, started_at, resolved_at, message_info 
+	id, host_ip, status, children_id, started_at, resolved_at, message_info 
 	FROM ping_pulse.alarms WHERE status != 'RESOLVED' AND host_ip = $1;`
 	result := pa.db.QueryRow(query, hostIP)
 
@@ -79,6 +81,7 @@ func (pa *PostgresAdapter) GetActiveAlarmByHost(hostIP string) (domain.AlarmDTO,
 		&alarm.ID,
 		&alarm.HostIP,
 		&alarm.Status,
+		pq.Array(&alarm.ChildrenID),
 		&alarm.StartedAt,
 		&alarm.ResolvedAt,
 		&rawData,
@@ -96,7 +99,7 @@ func (pa *PostgresAdapter) GetActiveAlarmByHost(hostIP string) (domain.AlarmDTO,
 
 func (pa *PostgresAdapter) GetAllPendingAlarms() ([]domain.AlarmDTO, error) {
 	query := `SELECT 
-	id, host_ip, status, started_at, resolved_at, message_info 
+	id, host_ip, status, children_id, started_at, resolved_at, message_info 
 	FROM ping_pulse.alarms WHERE status = 'PENDING';`
 	result, err := pa.db.Query(query)
 	if err != nil {
@@ -111,6 +114,7 @@ func (pa *PostgresAdapter) GetAllPendingAlarms() ([]domain.AlarmDTO, error) {
 			&alarm.ID,
 			&alarm.HostIP,
 			&alarm.Status,
+			pq.Array(&alarm.ChildrenID),
 			&alarm.StartedAt,
 			&alarm.ResolvedAt,
 			&rawData,
@@ -131,12 +135,12 @@ func (pa *PostgresAdapter) GetAllPendingAlarms() ([]domain.AlarmDTO, error) {
 
 /* ------------------------------ INSERT ------------------------------ */
 
-func (pa *PostgresAdapter) AddAlarm(hostIP string, startedAt time.Time) (domain.AlarmDTO, error) {
-	query := "INSERT INTO ping_pulse.alarms (host_ip, started_at) VALUES ($1, $2) RETURNING id, status;"
+func (pa *PostgresAdapter) AddAlarm(hostIP string, startedAt time.Time, childrenID []int) (domain.AlarmDTO, error) {
+	query := "INSERT INTO ping_pulse.alarms (host_ip, started_at, children_id) VALUES ($1, $2, $3) RETURNING id, status;"
 
 	var tx = pa.db.MustBegin()
 
-	result := tx.QueryRowx(query, hostIP, startedAt)
+	result := tx.QueryRowx(query, hostIP, startedAt, pq.Array(childrenID))
 
 	var alarm = domain.AlarmDTO{
 		HostIP:    hostIP,

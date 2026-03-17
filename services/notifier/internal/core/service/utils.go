@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func createBodyMessage(data domain.HostData) string {
+func createBodyMessage(alarmID int, data domain.ReportData) string {
 	dataTime := ""
 	if data.LastPulse != nil {
 		timestamp, _ := time.Parse(time.RFC3339, *data.LastPulse)
@@ -15,16 +15,20 @@ func createBodyMessage(data domain.HostData) string {
 		dataTime = timestamp.In(loc).Format(time.DateTime)
 	}
 
-	var body = fmt.Sprintf("\n🆔 *Nome*: %s", data.HostName)
+	var body = fmt.Sprintf("\n🆔 *ID Allarme*: %d\n", alarmID)
+
+	body += fmt.Sprintf("\n✏️ *Nome*: %s", data.HostName)
 	body += fmt.Sprintf("\n📡 *Indirizzo IP*: %s", data.HostIP)
 	body += fmt.Sprintf("\n🕒 *Orario*: %s", dataTime)
 
 	if data.Impact.ChildrenCount > 0 {
 		body += "\n\n---\n\n"
-		body += fmt.Sprintf("⏬ *Nodi figli coinvolti (%d):*", data.Impact.ChildrenCount)
+		body += fmt.Sprintf("⏬ *Nodi figli coinvolti (%d):*",
+			data.Impact.ChildrenCount)
 
 		for _, host := range data.Impact.ChildrenHosts {
-			body = fmt.Sprintf("%s\n- %s", body, host)
+			body = fmt.Sprintf("%s\n- %s (%s)",
+				body, host.Name, host.IPAddress)
 		}
 	}
 

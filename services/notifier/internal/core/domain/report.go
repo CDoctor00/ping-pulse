@@ -1,11 +1,11 @@
 package domain
 
 type CycleReport struct {
-	EventType  string     `json:"eventType"`
-	Timestamp  string     `json:"timestamp"` //datetime=2006-01-02T15:04:05Z07:00
-	Summary    Summary    `json:"summary"`
-	Incidents  []HostData `json:"incidents"`
-	Recoveries []HostData `json:"recoveries"`
+	EventType  string       `json:"eventType"`
+	Timestamp  string       `json:"timestamp"` //datetime=2006-01-02T15:04:05Z07:00
+	Summary    Summary      `json:"summary"`
+	Incidents  []ReportData `json:"incidents"`
+	Recoveries []ReportData `json:"recoveries"`
 }
 
 type Summary struct {
@@ -16,7 +16,7 @@ type Summary struct {
 	HostsRestored     int `json:"hostsRestored"`
 }
 
-type HostData struct {
+type ReportData struct {
 	HostIP         string         `json:"hostIP"`
 	HostName       string         `json:"hostName"`
 	Status         string         `json:"status"`
@@ -26,6 +26,12 @@ type HostData struct {
 }
 
 type ImpactAnalysis struct {
-	ChildrenCount int      `json:"childrenCount"`
-	ChildrenHosts []string `json:"childrenHosts"` //? Format: "IP (Name)"
+	ChildrenCount int         `json:"childrenCount"`
+	ChildrenHosts []ChildHost `json:"childrenHosts"`
+}
+
+type ChildHost struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	IPAddress string `json:"ipAddress"`
 }

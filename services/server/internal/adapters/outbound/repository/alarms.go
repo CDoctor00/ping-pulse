@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"server/internal/core/domain"
+
+	"github.com/lib/pq"
 )
 
 /* ------------------------------ SELECT ------------------------------ */
 
 func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 	query := `SELECT 
-	id, host_ip, status, started_at, resolved_at, message_info 
+	id, host_ip, status, children_id, started_at, resolved_at, message_info 
 	FROM ping_pulse.alarms WHERE id = $1;`
 	result := pa.db.QueryRow(query, alarmID)
 
@@ -20,6 +22,7 @@ func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 		&alarm.ID,
 		&alarm.HostIP,
 		&alarm.Status,
+		pq.Array(&alarm.ChildrenID),
 		&alarm.StartedAt,
 		&alarm.ResolvedAt,
 		&rawData,
@@ -37,23 +40,25 @@ func (pa *PostgresAdapter) GetAlarmByID(alarmID int) (domain.AlarmDTO, error) {
 
 func (pa *PostgresAdapter) GetAlarms() ([]domain.AlarmDTO, error) {
 	query := `SELECT 
-	id, host_ip, status, started_at, resolved_at, message_info 
+	id, host_ip, status, children_id, started_at, resolved_at, message_info 
 	FROM ping_pulse.alarms;`
 	result, err := pa.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("repository.GetAlarms: %w", err)
 	}
 
-	var (
-		alarms  = make([]domain.AlarmDTO, 0)
-		alarm   domain.AlarmDTO
-		rawData []byte
-	)
+	var alarms = make([]domain.AlarmDTO, 0)
 	for result.Next() {
+		var (
+			alarm   domain.AlarmDTO
+			rawData []byte
+		)
+
 		err = result.Scan(
 			&alarm.ID,
 			&alarm.HostIP,
 			&alarm.Status,
+			pq.Array(&alarm.ChildrenID),
 			&alarm.StartedAt,
 			&alarm.ResolvedAt,
 			&rawData,

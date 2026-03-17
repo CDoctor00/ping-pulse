@@ -9,6 +9,7 @@ type AlarmDTO struct {
 	ID          int
 	HostIP      string
 	Status      string
+	ChildrenID  []int64
 	StartedAt   time.Time
 	ResolvedAt  sql.NullTime
 	MessageInfo MessageInfo

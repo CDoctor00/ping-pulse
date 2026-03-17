@@ -3,11 +3,11 @@ package domain
 import "time"
 
 type CycleReport struct {
-	EventType  string     `json:"eventType"`
-	Timestamp  string     `json:"timestamp"` //? datetime=2006-01-02T15:04:05Z07:00
-	Summary    Summary    `json:"summary"`
-	Incidents  []Incident `json:"incidents"`
-	Recoveries []Recovery `json:"recoveries"`
+	EventType  string       `json:"eventType"`
+	Timestamp  string       `json:"timestamp"` //? datetime=2006-01-02T15:04:05Z07:00
+	Summary    Summary      `json:"summary"`
+	Incidents  []ReportData `json:"incidents"`
+	Recoveries []ReportData `json:"recoveries"`
 }
 
 type Summary struct {
@@ -18,7 +18,7 @@ type Summary struct {
 	HostsRestored     int `json:"hostsRestored"`
 }
 
-type Incident struct {
+type ReportData struct {
 	HostIP         string         `json:"hostIP"`
 	HostName       string         `json:"hostName"`
 	Status         string         `json:"status"`
@@ -28,24 +28,22 @@ type Incident struct {
 }
 
 type ImpactAnalysis struct {
-	ChildrenCount int      `json:"childrenCount"`
-	ChildrenHosts []string `json:"childrenHosts"` //? Format: "IP (Name)"
+	ChildrenCount int         `json:"childrenCount"`
+	ChildrenHosts []ChildHost `json:"childrenHosts"`
 }
 
-type Recovery struct {
-	HostIP         string         `json:"hostIP"`
-	HostName       string         `json:"hostName"`
-	Status         string         `json:"status"`
-	PreviousStatus string         `json:"previousStatus"`
-	Impact         ImpactAnalysis `json:"impactAnalysis"`
+type ChildHost struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	IPAddress string `json:"ipAddress"`
 }
 
 func NewCycleReport() *CycleReport {
 	return &CycleReport{
 		EventType:  "networkStatusReport",
 		Timestamp:  time.Now().Format(time.RFC3339),
-		Incidents:  make([]Incident, 0),
-		Recoveries: make([]Recovery, 0),
+		Incidents:  make([]ReportData, 0),
+		Recoveries: make([]ReportData, 0),
 	}
 }
 
