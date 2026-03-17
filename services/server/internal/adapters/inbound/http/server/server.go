@@ -16,11 +16,12 @@ type Server struct {
 }
 
 func NewServer(webHandler *handlers.WebHandler) *Server {
-	app := fiber.New(fiber.Config{
-		AppName:      "PingPulse Back-End",
-		ServerHeader: "Back-End",
-		ErrorHandler: handlers.ErrorHandler,
-	})
+	app := fiber.New(
+		fiber.Config{
+			AppName:      "PingPulse Back-End",
+			ServerHeader: "Back-End",
+			ErrorHandler: handlers.ErrorHandler,
+		})
 
 	return &Server{
 		app:     app,
@@ -51,5 +52,8 @@ func (s *Server) SetupRoutes() {
 }
 
 func (s *Server) Start() {
-	s.app.Listen(":7000")
+	s.app.Listen(":7000",
+		fiber.ListenConfig{
+			DisableStartupMessage: true,
+		})
 }
