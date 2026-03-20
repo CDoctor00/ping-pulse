@@ -85,7 +85,7 @@ func (ctx *cycleContext) markChildrenUnreachable(node *domain.Host, rootIncident
 		child.Mutex.Unlock()
 
 		fmt.Printf("\nName:%s, IP Address: %s, Status: %s",
-			node.Data.Name, node.Data.IPAddress, node.Data.Status)
+			child.Data.Name, child.Data.IPAddress, child.Data.Status)
 
 		ctx.markChildrenUnreachable(child, rootIncident)
 	}

@@ -94,7 +94,7 @@ func (s *MonitoringService) checkNode(node *domain.Host, cycleCtx *cycleContext)
 
 	fmt.Printf("\nName: %s, IP Address: %s, Status: %s, Average Latency: %f, PacketLoss: %f",
 		node.Data.Name, node.Data.IPAddress, node.Data.Status,
-		node.Data.Stats.AverageLatency.Float64, node.Data.Stats.AveragePacketLoss.Float64,
+		result.AverageLatency, result.AveragePacketLoss,
 	)
 
 	for _, child := range node.Children {
