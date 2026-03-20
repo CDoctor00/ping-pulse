@@ -41,6 +41,7 @@ func (s *Server) SetupRoutes() {
 	hostGroup.Post("/add", validator.ValidateBody[domain.AddHostsRequest](), s.handler.AddHosts)
 	hostGroup.Delete("/delete", validator.ValidateBody[domain.DeleteRequest](), s.handler.DeleteHosts)
 	hostGroup.Put("/update", validator.ValidateBody[domain.UpdateHostsRequest](), s.handler.UpdateHosts)
+	hostGroup.Patch("/switch-maintenance", validator.ValidateBody[domain.SwitchMaintenanceRequest](), s.handler.SwitchMaintenanceHost)
 
 	configsGroup := api.Group("configs")
 	configsGroup.Get("/all", s.handler.GetConfigs)

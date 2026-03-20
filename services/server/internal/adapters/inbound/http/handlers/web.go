@@ -154,3 +154,15 @@ func (h *WebHandler) UpdateConfigs(ctx fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON("Hosts updated")
 }
+
+/* ------------------------------ PATCH ------------------------------ */
+
+func (h *WebHandler) SwitchMaintenanceHost(ctx fiber.Ctx) error {
+	var data = ctx.Locals("payload").(domain.SwitchMaintenanceRequest)
+
+	if err := h.ucManager.SwitchMaintenanceHost(data); err != nil {
+		return err
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON("Hosts updated")
+}

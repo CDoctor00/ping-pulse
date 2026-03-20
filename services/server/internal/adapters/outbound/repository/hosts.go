@@ -157,17 +157,18 @@ func (pa *PostgresAdapter) DeleteHosts(hostsID []int) error {
 /* ------------------------------ UPDATE ------------------------------ */
 
 func (pa *PostgresAdapter) UpdateHosts(hosts []domain.HostDTO) error {
-	query := fmt.Sprintf(`WITH new_hosts (id, name, ip_address, parent_ip, note) AS (
+	query := fmt.Sprintf(`WITH new_hosts (id, name, ip_address, status, parent_ip, note) AS (
 	 	VALUES %s
 	 )
 		UPDATE ping_pulse.hosts h
 		SET 
 			name = nh.name::VARCHAR(255),
 			ip_address = nh.ip_address::VARCHAR(20),
+			status = nh.status::host_status,
 			parent_ip = nh.parent_ip::VARCHAR(20),
 			note = nh.note::VARCHAR(500)
 	FROM new_hosts nh
-	WHERE h.id = nh.id::integer;`, createPlaceholders(len(hosts), 5))
+	WHERE h.id = nh.id::integer;`, createPlaceholders(len(hosts), 6))
 
 	var tx = pa.db.MustBegin()
 

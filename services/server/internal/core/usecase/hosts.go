@@ -203,3 +203,35 @@ func (m *Manager) UpdateHosts(hosts []domain.HostDTO) error {
 
 	return nil
 }
+
+/* ------------------------------ PATCH ------------------------------ */
+
+func (m *Manager) SwitchMaintenanceHost(data domain.SwitchMaintenanceRequest) error {
+	hosts, err := m.repository.GetHosts()
+	if err != nil {
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.SwitchMaintenanceHost: %w", err),
+		}
+	}
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	var network = domain.NewNetwork(hosts)
+	network.Mutex.Lock()
+	network.Lookup[data.HostIP].SwitchMaintenanceStatus(*data.SetMaintenance)
+	network.Mutex.Unlock()
+
+	hosts = network.ParseToArray()
+
+	err = m.repository.UpdateHosts(hosts)
+	if err != nil {
+		return domain.UseCaseError{
+			Message:    domain.ErrInternal,
+			StackTrace: fmt.Errorf("usecase.SwitchMaintenanceHost: %w", err),
+		}
+	}
+
+	return nil
+}

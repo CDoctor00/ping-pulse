@@ -10,6 +10,7 @@ type WebHandler interface {
 	GetHost(ctx fiber.Ctx) error
 	UpdateHosts(ctx fiber.Ctx) error
 	DeleteHosts(ctx fiber.Ctx) error
+	SwitchMaintenanceHost(ctx fiber.Ctx) error
 
 	GetConfigs(ctx fiber.Ctx) error
 	UpdateConfigs(ctx fiber.Ctx) error

@@ -29,6 +29,7 @@ func parseDataToUpdate(hosts []domain.HostDTO) []any {
 		array = append(array, h.ID)
 		array = append(array, h.Name)
 		array = append(array, h.IPAddress)
+		array = append(array, h.Status)
 		array = append(array, h.ParentIP)
 		array = append(array, h.Note)
 	}

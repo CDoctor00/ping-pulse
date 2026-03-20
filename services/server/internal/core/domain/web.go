@@ -39,6 +39,12 @@ type UpdateConfigsRequest struct {
 	Configs BusinessConfig `json:"configs" validate:"required"`
 }
 
+type SwitchMaintenanceRequest struct {
+	HostID         int    `json:"hostID" validate:"required,gt=0"`
+	HostIP         string `json:"hostIP" validate:"required,ip"`
+	SetMaintenance *bool  `json:"setMaintenance" validate:"required,boolean"`
+}
+
 type Alarm struct {
 	ID          int         `json:"id" validate:"required,gt=0"`
 	HostIP      string      `json:"hostIP" validate:"required,ip"`
