@@ -32,6 +32,8 @@ This is the central table defining the network topology. It manages the **Parent
 | `disconnection_count` | `INTEGER`      | Historical count of downtime events.                        |
 | `avg_latency`         | `NUMERIC`      | Average latency (ms).                                       |
 | `avg_packet_loss`     | `NUMERIC`      | Average packet loss percentage.                             |
+| `note`                | `TEXT`         | Description or some notes about the host.                   |
+| `added_at`            | `TIMESTAMPTZ`  | Timestamp of the moment it was added the host to the db.    |
 
 **Technical Notes:**
 
@@ -42,14 +44,25 @@ This is the central table defining the network topology. It manages the **Parent
 
 Records the history of incidents and the status of notifications managed by the _Notification Handler_.
 
-| Column            | Type           | Description                                                              |
-| ----------------- | -------------- | ------------------------------------------------------------------------ |
-| `id`              | `INTEGER`      | Primary Key.                                                             |
-| `host_ip`         | `VARCHAR(20)`  | FK to `hosts(ip_address)`. The host that triggered the alarm.            |
-| `status`          | `alarm_status` | Status of the alarm (Pending, Ack, Resolved).                            |
-| `started_at`      | `TIMESTAMPTZ`  | Start of the downtime event.                                             |
-| `resolved_at`     | `TIMESTAMPTZ`  | End of the event.                                                        |
-| `acknowledged_at` | `TIMESTAMPTZ`  | Timestamp of when the user acknowledged the notification (via Telegram). |
+| Column         | Type           | Description                                                                                |
+| -------------- | -------------- | ------------------------------------------------------------------------------------------ |
+| `id`           | `INTEGER`      | Primary Key.                                                                               |
+| `host_ip`      | `VARCHAR(20)`  | FK to `hosts(ip_address)`. The host that triggered the alarm.                              |
+| `status`       | `alarm_status` | Status of the alarm (Pending, Ack, Resolved).                                              |
+| `children_id`  | `INTEGER []`   | Status of the alarm (Pending, Ack, Resolved).                                              |
+| `started_at`   | `TIMESTAMPTZ`  | Start of the downtime event.                                                               |
+| `resolved_at`  | `TIMESTAMPTZ`  | End of the event.                                                                          |
+| `message_info` | `JSONB`        | Object used to save the text body and info about the users to whom the messages were sent. |
+
+**Important Note on JSON Structure:**
+
+The `message_info` column must contain a specific JSON object consisting of **2 fields**. More precisely it is componed as:
+
+- `body`: The text body of the message.
+- `users`: A vector of an object that represent info about the users to whom the messages were sent. Every item is structured as:
+  - `chatID`: The ID of the chat where the message is sent.
+  - `sentTime`: The timestamp of the moment when the message is sent (format `2006-01-02T15:04:05Z07:00`).
+  - `messageID`: The ID of the message sent by the bot.
 
 ### 3. `configs`
 

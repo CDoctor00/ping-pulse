@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS ping_pulse.alarms (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     host_ip VARCHAR(20) NOT NULL REFERENCES ping_pulse.hosts(ip_address) ON DELETE CASCADE,
     status alarm_status DEFAULT 'PENDING',
-    children_id INT [],
+    children_id INTEGER [],
     started_at TIMESTAMPTZ DEFAULT NOW(),
     resolved_at TIMESTAMPTZ,
     acknowledged_at TIMESTAMPTZ

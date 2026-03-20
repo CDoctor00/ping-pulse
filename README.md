@@ -1,4 +1,4 @@
-# PingPulse
+![Logo](assets/logo.svg)
 
 The **_Ping Pulse_** project is a **high-reliability** and **decentralized** network monitoring system, designed to track the operational status of hosts within a defined topology. The architecture is based on **asynchronous microservices** that use a **message broaker** to collaborate and ensure that the critical _ping_ process is never interrupted by secondary notification or configuration services.
 
