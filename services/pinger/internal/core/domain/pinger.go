@@ -12,4 +12,5 @@ type PingResult struct {
 	AverageLatency    float64
 	AveragePacketLoss float64
 	Timestamp         time.Time
+	TimeNeeded        time.Duration
 }

@@ -80,5 +80,7 @@ func (p *ProbingAdapter) ExecPing(hostIP string) (domain.PingResult, error) {
 		result.AverageLatency = result.AverageLatency / float64(result.PacketsReceived)
 	}
 
+	result.TimeNeeded = time.Since(result.Timestamp)
+
 	return result, nil
 }

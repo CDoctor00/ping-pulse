@@ -76,6 +76,9 @@ func (s *MonitoringService) checkNode(node *domain.Host, cycleCtx *cycleContext)
 	defer node.Mutex.Unlock()
 
 	if node.Data.Status == domain.StatusMaintenance {
+		fmt.Printf("\nName: %s, IP Address: %s, Status: %v",
+			node.Data.Name, node.Data.IPAddress, node.Data.Status,
+		)
 		return nil
 	}
 
@@ -92,9 +95,9 @@ func (s *MonitoringService) checkNode(node *domain.Host, cycleCtx *cycleContext)
 		cycleCtx.handleStatusChange(node, oldStatus)
 	}
 
-	fmt.Printf("\nName: %s, IP Address: %s, Status: %s, Average Latency: %f, PacketLoss: %f",
+	fmt.Printf("\nName: %s, IP Address: %s, Status: %s, Average Latency: %.3f, PacketLoss: %.3f - Time Needed: %.3f seconds",
 		node.Data.Name, node.Data.IPAddress, node.Data.Status,
-		result.AverageLatency, result.AveragePacketLoss,
+		result.AverageLatency, result.AveragePacketLoss, float64(result.TimeNeeded.Seconds()),
 	)
 
 	for _, child := range node.Children {
