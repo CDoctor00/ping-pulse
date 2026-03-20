@@ -75,7 +75,7 @@ func (s *MonitoringService) checkNode(node *domain.Host, cycleCtx *cycleContext)
 	node.Mutex.Lock()
 	defer node.Mutex.Unlock()
 
-	if node.Data.Status == domain.StatusMantainance {
+	if node.Data.Status == domain.StatusMaintenance {
 		return nil
 	}
 

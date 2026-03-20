@@ -6,7 +6,7 @@ const (
 	StatusDown        = "DOWN"
 	StatusUnreachable = "UNREACHABLE"
 	StatusPending     = "PENDING"
-	StatusMantainance = "MANTAINANCE"
+	StatusMaintenance = "MAINTENANCE"
 	StatusUp          = "UP"
 )
 
