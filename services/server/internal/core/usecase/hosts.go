@@ -157,7 +157,7 @@ func (m *Manager) DeleteHosts(hostsID []int) error {
 	return nil
 }
 
-/* ------------------------------ PATCH ------------------------------ */
+/* ------------------------------ PUT ------------------------------ */
 
 func (m *Manager) UpdateHosts(hosts []domain.HostDTO) error {
 	for _, host := range hosts {

@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// TODO delete-useless
 type WebHandler interface {
 	AddHosts(ctx fiber.Ctx) error
 	GetHosts(ctx fiber.Ctx) error
@@ -15,6 +14,7 @@ type WebHandler interface {
 	GetConfigs(ctx fiber.Ctx) error
 	UpdateConfigs(ctx fiber.Ctx) error
 
+	GetAlarm(ctx fiber.Ctx) error
 	GetAlarms(ctx fiber.Ctx) error
 	DeleteAlarms(ctx fiber.Ctx) error
 }

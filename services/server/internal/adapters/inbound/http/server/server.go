@@ -5,6 +5,7 @@ import (
 	"server/internal/adapters/inbound/http/middlewares/limiter"
 	"server/internal/adapters/inbound/http/middlewares/validator"
 	"server/internal/core/domain"
+	"server/internal/core/ports/inbound"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -12,10 +13,10 @@ import (
 
 type Server struct {
 	app     *fiber.App
-	handler *handlers.WebHandler
+	handler inbound.WebHandler
 }
 
-func NewServer(webHandler *handlers.WebHandler) *Server {
+func NewServer(webHandler inbound.WebHandler) *Server {
 	app := fiber.New(
 		fiber.Config{
 			AppName:      "PingPulse Back-End",

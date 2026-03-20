@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"server/internal/core/domain"
+	"server/internal/core/ports/inbound"
 	"server/internal/core/usecase"
 	"strconv"
 
@@ -17,6 +18,8 @@ func NewWebHandler(ucManager *usecase.Manager) *WebHandler {
 		ucManager: ucManager,
 	}
 }
+
+var _ inbound.WebHandler = (*WebHandler)(nil)
 
 /* ------------------------------ GET ------------------------------ */
 
