@@ -1,6 +1,6 @@
 ![Logo](assets/logo.svg)
 
-The **_Ping Pulse_** project is a **high-reliability** and **decentralized** network monitoring system, designed to track the operational status of hosts within a defined topology. The architecture is based on **asynchronous microservices** that use a **message broaker** to collaborate and ensure that the critical _ping_ process is never interrupted by secondary notification or configuration services.
+The **_Ping Pulse_** project is a **high-reliability** and **decentralized** network monitoring system, designed to track the operational status of hosts within a defined topology. The architecture is based on **asynchronous microservices** that use a **message broker** to collaborate and ensure that the critical _ping_ process is never interrupted by secondary notification or configuration services.
 
 ---
 
@@ -20,7 +20,12 @@ PingPulse focuses on the continuity of the _ping_ service, intelligent dependenc
 - **Multi-Channel Escalation Notification System**
   - The **Notification Handler Service** manages alarms with a two-level process:
     - **Primary Notification:** Immediate alert sending via **Telegram Bot API**.
-    - **Automatic Escalation:** If the alarm is not **acknowledged** by the user clicking on the specific message button, the message will be deleted and new one will be sent until the alarm is marked as received.
+    - **Automatic Escalation:** If the alarm is not **acknowledged** by the user clicking on the specific message button, the message will be deleted and a new one will be sent until the alarm is marked as received.
+- **Automated & Manual Data Persistence Strategy**
+  - **Database Maintenance Engine**: A dedicated container (`db-maintenance`) manages PostgreSQL backups via automated **shell scripts**.
+  - **Flexible Execution**: Supports both **cron-scheduled** cycles and **manual triggers** via an interactive **TUI** or direct `docker exec` commands for on-demand snapshots before critical maintenance.
+  - **Atomic Restore**: Database restores are wrapped in a single PostgreSQL transaction, with automatic rollback on error to prevent partial or corrupted restores.
+  - **Data Integrity**: Ensures the long-term safety of uptime/downtime history and network topology configurations.
 - **User Interface and Centralized Data History**
   - The **Frontend Dashboard (React)** offers a **Dashboard** with **network graph** visualization and an interface for viewing data and modifying configuration.
   - **PostgreSQL** serves as the central archive for the **network topology**, detailed **uptime/downtime history**, and alarm status.
@@ -31,16 +36,17 @@ PingPulse focuses on the continuity of the _ping_ service, intelligent dependenc
 
 The system is composed of three independent Golang services that communicate via RabbitMQ, supported by a relational database and a user interface.
 
-| **Component**                               | **Architectural Role**               | **Main Tasks**                                                                                                                                                              |
-| :------------------------------------------ | :----------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Monitoring Core Service (Pinger)**        | **Core Logic (Producer/Consumer)**   | - Executes concurrent **pings**.<br>- Implements the network **graph logic**.<br>- **Produces** alarm events for RabbitMQ.<br>- **Consumes** configuration reload messages. |
-| **Backend API Service (Server)**            | **Interface and Control**            | - Exposes **REST APIs** for the Frontend.<br>- Manages configuration changes with a **blocking lock**.<br>- **Produces** configuration reload events for RabbitMQ.          |
-| **Notification Handler Service (Notifier)** | **Alarm Logic (Consumer)**           | - **Consumes** alarm events from RabbitMQ.<br>- Sends the primary notification (**Telegram**).<br>- Manages the **escalation timer**.<br>- Triggers the call (**Twilio**).  |
-| **Frontend Dashboard (React)**              | **User Interface**                   | - Provides the Dashboard.<br>- **Network graph** visualization.<br>- Interface for configuration modification and history viewing.                                          |
-| **PostgreSQL**                              | **Relational Database**              | - Stores the **network topology** and configurations.<br>- Maintains **uptime/downtime history** and alarms.                                                                |
-| **RabbitMQ**                                | **Message Broker**                   | - Ensures **asynchronous communication** and **decoupling** between the Go services.<br>- Buffers critical events (alarm/configuration).                                    |
-| **Telegram**                                | **External Services (Notification)** | - Communication channels for **primary notification** (Telegram Bot API).                                                                                                   |
-| **Docker Compose**                          | **Local Orchestration**              | - Manages and interconnects the entire microservices environment for local development and deployment.                                                                      |
+| **Component**                                 | **Architectural Role**               | **Main Tasks**                                                                                                                                                                                                                                                              |
+| :-------------------------------------------- | :----------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monitoring Core Service (Pinger)**          | **Core Logic (Producer/Consumer)**   | - Executes concurrent **pings**.<br>- Implements the network **graph logic**.<br>- **Produces** alarm events for RabbitMQ.<br>- **Consumes** configuration reload messages.                                                                                                 |
+| **Backend API Service (Server)**              | **Interface and Control**            | - Exposes **REST APIs** for the Frontend.<br>- Manages configuration changes with a **blocking lock**.<br>- **Produces** configuration reload events for RabbitMQ.                                                                                                          |
+| **Notification Handler Service (Notifier)**   | **Alarm Logic (Consumer)**           | - **Consumes** alarm events from RabbitMQ.<br>- Sends the primary notification (**Telegram**).<br>- Manages the **escalation timer**.                                                                                                                                       |
+| **Frontend Dashboard (React)**                | **User Interface**                   | - Provides the Dashboard.<br>- **Network graph** visualization.<br>- Interface for configuration modification and history viewing.                                                                                                                                          |
+| **PostgreSQL**                                | **Relational Database**              | - Stores the **network topology** and configurations.<br>- Maintains **uptime/downtime history** and alarms.                                                                                                                                                                |
+| **RabbitMQ**                                  | **Message Broker**                   | - Ensures **asynchronous communication** and **decoupling** between the Go services.<br>- Buffers critical events (alarm/configuration).                                                                                                                                    |
+| **Telegram**                                  | **External Services (Notification)** | - Communication channel for **primary notification** (Telegram Bot API).                                                                                                                                                                                                    |
+| **Database Maintenance Engine (Docker/Bash)** | **Maintenance & Persistence**        | - Executes **shell scripts** for PostgreSQL dumps.<br>- Handles **automated scheduling** (Cron).<br>- Provides an interactive **TUI** for manual backup, restore, and validation operations.<br>- Manages **file rotation** and **log persistence** on the host filesystem. |
+| **Docker Compose**                            | **Local Orchestration**              | - Manages and interconnects the entire microservices environment for local development and deployment.                                                                                                                                                                      |
 
 ---
 
@@ -48,18 +54,47 @@ The system is composed of three independent Golang services that communicate via
 
 ### Flow 1: Alarm Detection and Escalation
 
-1.  **Monitoring Core** detects a state change thanks to the graph/ping logic.
-2.  The Core sends a JSON message (alarm event) to the RabbitMQ queue.
-3.  **Notification Handler** consumes the event.
-4.  It sends the **Primary Notification** via Telegram, marking the alarm as **PENDING** in PostgreSQL.
-5.  If no acknowledgment is received (via Telegram) within a time limit, the service sends again the notification.
+1. **Monitoring Core** detects a state change thanks to the graph/ping logic.
+2. The Core sends a JSON message (alarm event) to the RabbitMQ queue.
+3. **Notification Handler** consumes the event.
+4. It sends the **Primary Notification** via Telegram, marking the alarm as **PENDING** in PostgreSQL.
+5. If no acknowledgment is received (via Telegram) within a time limit, the service sends the notification again.
 
 ### Flow 2: Configuration Update
 
-1.  The administrator modifies the configuration (settings or topology) via the **Frontend Dashboard**.
-2.  The **Backend API Service** receives the REST request.
-3.  It applies a **blocking Mutex** to serialize writes.
-4.  It executes the configuration modification in PostgreSQL using an **Atomic SQL Transaction**.
-5.  It releases the Mutex.
-6.  It sends a "Configuration Reload" message to the dedicated RabbitMQ queue.
-7.  **Monitoring Core** receives the message, applies its **internal Lock** to momentarily suspend pings, reloads the new topology from PostgreSQL, and immediately resumes the updated ping cycle.
+1. The administrator modifies the configuration (settings or topology) via the **Frontend Dashboard**.
+2. The **Backend API Service** receives the REST request.
+3. It applies a **blocking Mutex** to serialize writes.
+4. It executes the configuration modification in PostgreSQL using an **Atomic SQL Transaction**.
+5. It releases the Mutex.
+6. It sends a "Configuration Reload" message to the dedicated RabbitMQ queue.
+7. **Monitoring Core** receives the message, applies its **internal Lock** to momentarily suspend pings, reloads the new topology from PostgreSQL, and immediately resumes the updated ping cycle.
+
+### Flow 3: Database Maintenance (Backup & Restore)
+
+1. **Scheduled Trigger**: The `db-maintenance` container automatically runs backup and validation scripts based on the predefined Cron schedule.
+2. **Manual Trigger**: The administrator can interact with the system via the **interactive TUI** (`docker exec -it pingpulse_db_maintenance /usr/local/bin/tui.sh`) or direct `docker exec` commands to perform on-demand backups, restores, and validations.
+3. **Backup Execution**: The script performs a `pg_dump` (without ownership metadata for portability), compresses the output, and stores it in `./backups/dumps/` on the host filesystem, managing file rotation to optimize space.
+4. **Restore Execution**: The restore script wraps the entire import in a **single PostgreSQL transaction**. If any error occurs, the transaction is automatically rolled back, leaving the database untouched.
+
+---
+
+## 📅 Database Backup Schedule Summary
+
+| Time  | Task              | Frequency | Cron Expression |
+| ----- | ----------------- | --------- | --------------- |
+| 02:00 | Database Backup   | Daily     | `0 2 * * *`     |
+| 03:00 | Backup Validation | Daily     | `0 3 * * *`     |
+| 04:00 | Log Rotation      | Weekly    | `0 4 * * 0`     |
+
+**Total Backup Window**: ~1 hour (02:00 - 03:00 for backup + validation)
+
+**Off-Peak Timing**: Scheduled during low-activity hours to minimize performance impact on production monitoring.
+
+**Storage Layout**:
+
+```
+backups/
+├── dumps/    # Compressed SQL dump files (.sql.gz)
+└── logs/     # Backup, restore, validation and cron logs
+```

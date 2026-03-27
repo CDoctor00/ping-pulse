@@ -1,0 +1,8 @@
+# Daily backup at 2:00
+0 2 * * * /usr/local/bin/backup.sh >> /backups/logs/cron.log 2>&1
+
+# Daily backup validation at 3:00
+0 3 * * * /usr/local/bin/validate.sh >> /backups/logs/cron.log 2>&1
+
+# Weekly log rotation on Sunday at 4:00
+0 4 * * 0 find /backups/logs -name "*.log" -type f -exec truncate -s 0 {} \; >> /backups/logs/cron.log 2>&1

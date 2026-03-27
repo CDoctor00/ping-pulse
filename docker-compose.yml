@@ -41,7 +41,7 @@ services:
         condition: service_healthy
     command: migrate -path /migrations -database ${DB_SOURCE} -verbose up
 
-  backup:
+  db-maintenance:
     build:
       context: ./backup
       dockerfile: Dockerfile
@@ -50,10 +50,13 @@ services:
     env_file: ".env"
     environment:
       TZ: "Europe/Rome"
+      PGPASSWORD: "${DB_PASSWORD}"
+      BACKUP_RETENTION_DAYS: "30"
+      BACKUP_MAX_COUNT: "50"
     networks:
       - pingpulse_network
     volumes:
-      - pingpulse_backups_volume:/backups
+      - ./backups:/backups
     depends_on:
       migrator:
         condition: service_completed_successfully
