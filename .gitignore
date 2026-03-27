@@ -1,3 +1,5 @@
 .env
 .vscode
 *.db
+dist
+node_modules
