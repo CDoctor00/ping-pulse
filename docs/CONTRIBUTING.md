@@ -28,7 +28,7 @@ The `footer` is optional. The [Commit Message Footer](#commit-footer) format des
   │       │             │
   │       │             └─⫸ Commit Summary: Summary in present tense (like a title)
   │       │
-  │       └─⫸ Scope (Project Component): Server|Pinger|Notifier|Frontend
+  │       └─⫸ Scope (Project Component): Server|Pinger|Notifier|Frontend|Migrator|DB-Maintenance
   │
   └─⫸ Commit Type: CHORE|DOCS|FEAT|FIX|OTHER|PERF|REFACTOR|STYLE|TEST
 ```
