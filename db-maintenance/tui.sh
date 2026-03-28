@@ -11,7 +11,7 @@ DIALOG_WIDTH=60
 # Checks that all required env vars are set before doing anything
 check_env() {
     local missing=0
-    for var in DB_HOST DB_USER DB_NAME PGPASSWORD; do
+    for var in DB_USER DB_NAME PGPASSWORD; do
         if [ -z "${!var}" ]; then
             echo "Missing environment variable: $var"
             missing=1

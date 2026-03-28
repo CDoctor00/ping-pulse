@@ -7,6 +7,10 @@ RUN curl -L https://github.com/golang-migrate/migrate/releases/download/${MIGRAT
     mv migrate /usr/local/bin/migrate && \
     chmod +x /usr/local/bin/migrate
 
-WORKDIR / 
+WORKDIR /
 
 COPY ./migrations /migrations
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
