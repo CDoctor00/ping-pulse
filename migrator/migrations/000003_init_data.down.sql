@@ -1,0 +1,1 @@
+DELETE FROM ping_pulse.configs WHERE id = 1;
